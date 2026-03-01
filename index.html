@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru" data-lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>easy_cars.md — Продажа и заказ авто</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top__row">
+
+    <a class="brandPill" href="#" id="secretLogo" title="easy_cars.md">
+      <span class="brandPill__dot" aria-hidden="true"></span>
+      <span class="brandPill__text">easy_cars.md</span>
+    </a>
+
+    <nav class="nav">
+      <a class="nav__link" href="#catalog" data-i18n="nav.cars">Авто</a>
+      <a class="nav__link" href="#services" data-i18n="nav.services">Услуги</a>
+      <a class="nav__link" href="#contacts" data-i18n="nav.contacts">Контакты</a>
+    </nav>
+
+    <div class="top__actions">
+      <div class="topBadge" aria-label="Premium badge">
+        <span class="topBadge__dot" aria-hidden="true"></span>
+        <span class="topBadge__text" data-i18n="top.premium">Premium auto selection • Bălți</span>
+      </div>
+
+      <div class="langSwitch" id="langSwitch" role="group" aria-label="Language switch">
+        <button class="langSwitch__btn" type="button" data-lang="ru">RU</button>
+        <button class="langSwitch__btn" type="button" data-lang="ro">RO</button>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero__grid">
+
+    <div class="hero__left">
+      <div class="heroChip" aria-label="Premium auto selection">
+        <span class="heroChip__dot" aria-hidden="true"></span>
+        <span class="heroChip__text" data-i18n="top.premium">Premium auto selection • Bălți</span>
+      </div>
+
+      <h1 class="hero__title" data-i18n="hero.title">Продажа и заказ авто из Европы</h1>
+      <p class="hero__desc" data-i18n="hero.desc">
+        Подберём авто под бюджет, привезём, поможем с оформлением. Город: Bălți.
+      </p>
+
+      <div class="hero__cta">
+        <a class="btn" href="#catalog" data-i18n="hero.ctaCatalog">Смотреть авто</a>
+        <a class="btn btn--ghost" href="#request" data-i18n="hero.ctaRequest">Оставить заявку</a>
+      </div>
+
+      <div class="hero__badges">
+        <span class="badge">easy_cars.md</span>
+        <span class="badge" data-i18n="badge.europe">Европа</span>
+        <span class="badge" data-i18n="badge.selection">Подбор</span>
+        <span class="badge" data-i18n="badge.delivery">Доставка</span>
+      </div>
+    </div>
+
+    <div class="heroStats" aria-label="Преимущества">
+      <div class="heroStat">
+        <div class="heroStat__icon">✓</div>
+        <div class="heroStat__title" data-i18n="stat.check.title">Проверка</div>
+        <div class="heroStat__text" data-i18n="stat.check.text">Диагностика и история</div>
+      </div>
+
+      <div class="heroStat">
+        <div class="heroStat__icon">⏱</div>
+        <div class="heroStat__title" data-i18n="stat.delivery.title">Доставка</div>
+        <div class="heroStat__text" data-i18n="stat.delivery.text">Европа → Bălți</div>
+      </div>
+
+      <div class="heroStat">
+        <div class="heroStat__icon">📄</div>
+        <div class="heroStat__title" data-i18n="stat.docs.title">Оформление</div>
+        <div class="heroStat__text" data-i18n="stat.docs.text">Поможем с документами</div>
+      </div>
+
+      <div class="heroStat">
+        <div class="heroStat__icon">★</div>
+        <div class="heroStat__title" data-i18n="stat.pick.title">Подбор</div>
+        <div class="heroStat__text" data-i18n="stat.pick.text">Под бюджет и задачу</div>
+      </div>
+    </div>
+
+    <div class="hero__card">
+      <div class="hero__cardTitle" data-i18n="hero.quick.title">Быстрый контакт</div>
+      <div class="hero__line"><span class="muted" data-i18n="labels.tel">Тел:</span> <b>+373 78 312 711</b></div>
+      <div class="hero__line"><span class="muted" data-i18n="labels.city">Город:</span> <b>Bălți</b></div>
+      <div class="hero__line"><span class="muted">Instagram:</span> <b>@easy_cars.md</b></div>
+
+      <div class="hero__cardBtns">
+        <a class="btn btn--full" href="tel:+37378312711" data-i18n="btn.call">Позвонить</a>
+        <a class="btn btn--ghost btn--full" href="https://www.instagram.com/easy_cars.md/" target="_blank" rel="noreferrer" data-i18n="btn.writeIg">Написать в Instagram</a>
+        <a class="btn btn--ghost btn--full" href="https://wa.me/37378312711" target="_blank" rel="noreferrer">WhatsApp</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section" id="services">
+  <div class="wrap">
+    <h2 class="h2" data-i18n="services.title">Услуги</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="card__title" data-i18n="services.s1.title">Продажа авто</div>
+        <div class="card__text" data-i18n="services.s1.text">Авто в наличии. Осмотр, проверка, оформление.</div>
+      </div>
+      <div class="card">
+        <div class="card__title" data-i18n="services.s2.title">Заказ из Европы</div>
+        <div class="card__text" data-i18n="services.s2.text">Подбор под бюджет, поиск вариантов, доставка.</div>
+      </div>
+      <div class="card">
+        <div class="card__title" data-i18n="services.s3.title">Подбор под клиента</div>
+        <div class="card__text" data-i18n="services.s3.text">Марка/год/пробег/коробка — под твою задачу.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt" id="catalog">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="h2" data-i18n="catalog.title">Авто</h2>
+      <p class="muted" data-i18n="catalog.subtitle">Поиск по марке/модели/году/цене</p>
+    </div>
+
+    <div class="filters">
+      <input class="input" id="q" data-i18n-placeholder="catalog.searchPh" placeholder="Поиск: Skoda Rapid 2017, Ford Fusion 2016..." />
+      <select class="input" id="tag">
+        <option value="all" data-i18n="filter.all">Все</option>
+        <option value="inStock" data-i18n="filter.inStock">В наличии</option>
+        <option value="soon" data-i18n="filter.soon">Скоро в продаже</option>
+        <option value="sold" data-i18n="filter.sold">Продано</option>
+      </select>
+      <select class="input" id="sort">
+        <option value="new" data-i18n="sort.new">Сначала новые</option>
+        <option value="priceAsc" data-i18n="sort.priceAsc">Цена ↑</option>
+        <option value="priceDesc" data-i18n="sort.priceDesc">Цена ↓</option>
+        <option value="yearDesc" data-i18n="sort.yearDesc">Год ↓</option>
+      </select>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden data-i18n="catalog.empty">Ничего не найдено.</div>
+
+    <div class="pager" id="pager" hidden>
+      <button class="pager__btn" id="pagePrev" type="button" aria-label="Предыдущая страница">‹</button>
+      <div class="pager__info" id="pageInfo">1 / 1</div>
+      <button class="pager__btn" id="pageNext" type="button" aria-label="Следующая страница">›</button>
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt" id="request">
+  <div class="wrap">
+    <h2 class="h2" data-i18n="request.title">Заявка</h2>
+    <p class="muted" data-i18n="request.subtitle">Заполни — и отправь нам в личку (WhatsApp или Telegram).</p>
+
+    <form class="form" id="form">
+      <input class="input" name="name" data-i18n-placeholder="request.namePh" placeholder="Имя" required />
+      <input class="input" name="phone" data-i18n-placeholder="request.phonePh" placeholder="Телефон" required />
+      <input class="input" name="city" data-i18n-placeholder="request.cityPh" placeholder="Город (например: Bălți)" required />
+      <input class="input" name="want" data-i18n-placeholder="request.wantPh" placeholder="Что ищешь? (марка, год, бюджет)" />
+      <button class="btn btn--full" type="submit" id="sendBtn" data-i18n="request.sendBtn">Выбрать куда отправить</button>
+    </form>
+  </div>
+</section>
+
+<section class="section" id="contacts">
+  <div class="wrap">
+    <h2 class="h2" data-i18n="contacts.title">Контакты</h2>
+
+    <div class="contacts">
+      <div class="contacts__box">
+        <div><span class="muted">Instagram:</span> <b>@easy_cars.md</b></div>
+        <div><span class="muted" data-i18n="labels.tel">Тел:</span> <b>+373 78 312 711</b></div>
+        <div><span class="muted" data-i18n="labels.city">Город:</span> <b>Bălți</b></div>
+
+        <div class="contacts__btns">
+          <a class="btn btn--ghost btn--full" href="https://www.instagram.com/easy_cars.md/" target="_blank" rel="noreferrer" data-i18n="btn.openIg">Открыть Instagram</a>
+          <a class="btn btn--full" href="tel:+37378312711" data-i18n="btn.call">Позвонить</a>
+        </div>
+      </div>
+
+      <div class="contacts__map premiumMap">
+        <div class="premiumMap__glow"></div>
+        <iframe
+          class="mapFrame"
+          src="https://www.google.com/maps?q=Balti,+Moldova&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer__row">
+    <div class="muted">© <span id="year"></span> easy_cars.md</div>
+    <div class="muted" data-i18n="footer.tagline">Продажа/заказ авто из Европы</div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal__overlay" data-close="1"></div>
+  <div class="modal__box modal__box--wide">
+    <button class="modal__close" data-close="1">✕</button>
+
+    <div class="modal__title" id="mTitle">—</div>
+    <div class="modal__price" id="mPrice">—</div>
+    <div class="muted" id="mMeta">—</div>
+
+    <div class="specs" id="mSpecs" hidden></div>
+
+    <div class="mCover" id="mCoverWrap" hidden>
+      <img id="mCover" alt="Фото авто" />
+    </div>
+
+    <div class="gallery" id="mGallery" hidden>
+      <div class="gallery__head">
+        <div class="gallery__title" id="mGalleryTitle">Фото/видео (Instagram)</div>
+        <div class="muted" id="mGalleryHint">листай →</div>
+      </div>
+      <div class="gallery__track" id="mGalleryTrack"></div>
+    </div>
+
+    <div class="modal__text" id="mText">—</div>
+
+    <div class="modal__actions">
+      <a class="btn btn--full" href="https://www.instagram.com/easy_cars.md/" target="_blank" rel="noreferrer" data-i18n="btn.writeIg2">Написать в Instagram</a>
+      <a class="btn btn--ghost btn--full" href="tel:+37378312711" data-i18n="btn.call">Позвонить</a>
+      <a class="btn btn--ghost btn--full" href="https://wa.me/37378312711" target="_blank" rel="noreferrer">WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="adminModal" aria-hidden="true">
+  <div class="modal__overlay" data-close="1"></div>
+  <div class="modal__box adminBox">
+    <button class="modal__close" data-close="1">✕</button>
+
+    <div class="adminHead">
+      <div class="adminHead__title">Админка</div>
+      <div class="muted adminHead__sub">Добавляй авто + обложку (прямая ссылка). Meta собирается автоматически из полей.</div>
+    </div>
+
+    <div class="adminGrid">
+      <form id="adminForm" class="adminForm">
+        <input type="hidden" id="aId" />
+
+        <div class="adminRow">
+          <div class="adminField">
+            <label class="adminLabel">Заголовок</label>
+            <input class="input" id="aTitle" placeholder="Напр: Skoda Rapid" required />
+          </div>
+          <div class="adminField">
+            <label class="adminLabel">Год</label>
+            <input class="input" id="aYear" type="number" min="1950" max="2100" placeholder="2017" required />
+          </div>
+        </div>
+
+        <div class="adminRow">
+          <div class="adminField">
+            <label class="adminLabel">Цена</label>
+            <input class="input" id="aPrice" type="number" min="0" placeholder="5850" />
+          </div>
+          <div class="adminField">
+            <label class="adminLabel">Валюта</label>
+            <select class="input" id="aCurrency">
+              <option value="€">€</option>
+              <option value="MDL">MDL</option>
+              <option value="$">$</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="adminRow">
+          <div class="adminField">
+            <label class="adminLabel">Пробег (км)</label>
+            <input class="input" id="aKm" type="number" min="0" placeholder="150000" />
+          </div>
+          <div class="adminField">
+            <label class="adminLabel">Статус</label>
+            <select class="input" id="aTag">
+              <option value="inStock">В наличии</option>
+              <option value="soon">Скоро в продаже</option>
+              <option value="sold">Продано</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="adminSection">
+          <div class="adminSection__title">Характеристики</div>
+
+          <div class="adminRow">
+            <div class="adminField">
+              <label class="adminLabel">Коробка</label>
+              <select class="input" id="aTrans">
+                <option value="">—</option>
+                <option value="Механика">Механика</option>
+                <option value="Автомат">Автомат</option>
+                <option value="CVT">CVT</option>
+                <option value="DCT">DCT</option>
+              </select>
+            </div>
+            <div class="adminField">
+              <label class="adminLabel">Топливо</label>
+              <select class="input" id="aFuel">
+                <option value="">—</option>
+                <option value="Бензин">Бензин</option>
+                <option value="Дизель">Дизель</option>
+                <option value="Гибрид">Гибрид</option>
+                <option value="Электро">Электро</option>
+                <option value="Газ/Бензин">Газ/Бензин</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="adminRow">
+            <div class="adminField">
+              <label class="adminLabel">Привод</label>
+              <select class="input" id="aDrive">
+                <option value="">—</option>
+                <option value="FWD">FWD (передний)</option>
+                <option value="RWD">RWD (задний)</option>
+                <option value="AWD">AWD/4x4</option>
+              </select>
+            </div>
+            <div class="adminField">
+              <label class="adminLabel">Кузов</label>
+              <select class="input" id="aBody">
+                <option value="">—</option>
+                <option value="Седан">Седан</option>
+                <option value="Хэтчбек">Хэтчбек</option>
+                <option value="Универсал">Универсал</option>
+                <option value="Кроссовер">Кроссовер</option>
+                <option value="Внедорожник">Внедорожник</option>
+                <option value="Купе">Купе</option>
+                <option value="Минивэн">Минивэн</option>
+                <option value="Пикап">Пикап</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="adminRow">
+            <div class="adminField">
+              <label class="adminLabel">Двигатель (л)</label>
+              <input class="input" id="aEngine" placeholder="Напр: 1.6" inputmode="decimal" />
+            </div>
+            <div class="adminField">
+              <label class="adminLabel">Мощность (л.с.)</label>
+              <input class="input" id="aPower" type="number" min="0" placeholder="Напр: 105" />
+            </div>
+          </div>
+
+          <div class="adminRow">
+            <div class="adminField">
+              <label class="adminLabel">Цвет</label>
+              <input class="input" id="aColor" placeholder="Напр: Белый" />
+            </div>
+            <div class="adminField">
+              <label class="adminLabel">VIN (опционально)</label>
+              <input class="input" id="aVin" placeholder="Напр: WVWZZZ..." />
+            </div>
+          </div>
+
+          <div class="adminHint" id="aMetaPreview">Meta: —</div>
+        </div>
+
+        <div class="adminField">
+          <label class="adminLabel">Обложка (URL картинки .jpg/.png)</label>
+          <input class="input" id="aCover" placeholder="https://.../photo.jpg" />
+          <div class="muted" style="margin-top:6px;">Совет: Postimages/Imgur → прямой линк на картинку.</div>
+        </div>
+
+        <div class="adminField">
+          <label class="adminLabel">Фото авто (URL — по одному в строке)</label>
+          <textarea class="textarea" id="aPhotos" placeholder="https://.../1.jpg
+https://.../2.jpg"></textarea>
+        </div>
+
+        <div class="adminField">
+          <label class="adminLabel">Meta (авто)</label>
+          <input class="input" id="aMeta" placeholder="собирается автоматически" readonly />
+          <div class="muted" style="margin-top:6px;">Собирается из коробки/топлива/привода/двигателя/л.с./кузова/цвета.</div>
+        </div>
+
+        <div class="adminField">
+          <label class="adminLabel">Instagram посты авто (ссылки)</label>
+          <textarea class="textarea" id="aIg" placeholder="Вставь 1–10 ссылок, каждая с новой строки:
+https://www.instagram.com/p/....
+https://www.instagram.com/reel/...."></textarea>
+        </div>
+
+        <div class="adminField">
+          <label class="adminLabel">Полное описание</label>
+          <textarea class="textarea" id="aText" placeholder="Состояние, документы, комплектация..."></textarea>
+        </div>
+
+        <div class="adminActions">
+          <button class="btn btn--full" type="submit" id="saveBtn">Сохранить</button>
+          <button class="btn btn--ghost btn--full" type="button" id="resetAdminBtn">Очистить</button>
+        </div>
+      </form>
+
+      <div class="adminList">
+        <div class="adminList__top">
+          <div class="adminList__title">Список авто</div>
+          <div class="adminList__btns">
+            <button class="btn btn--ghost" id="exportBtn" type="button">Экспорт JSON</button>
+            <button class="btn btn--ghost" id="importBtn" type="button">Импорт JSON</button>
+            <button class="btn" id="clearAllBtn" type="button">Очистить всё</button>
+          </div>
+        </div>
+
+        <div class="adminItems" id="adminItems"></div>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="sendModal" aria-hidden="true">
+  <div class="modal__overlay" data-close="1"></div>
+  <div class="modal__box sendBox">
+    <button class="modal__close" data-close="1">✕</button>
+
+    <div class="sendHead">
+      <div class="sendTitle" data-i18n="send.title">Куда отправить заявку?</div>
+      <div class="muted sendSub" data-i18n="send.sub">Выбери WhatsApp или Telegram — текст подставится автоматически.</div>
+    </div>
+
+    <div class="sendPreview">
+      <div class="sendPreview__label muted" data-i18n="send.previewLabel">Текст заявки</div>
+      <pre class="sendPreview__text" id="sendText">—</pre>
+    </div>
+
+    <div class="sendActions">
+      <a class="btn btn--full" id="sendWaBtn" href="#" target="_blank" rel="noreferrer" data-i18n="send.wa">Открыть WhatsApp</a>
+      <a class="btn btn--ghost btn--full" id="sendTgBtn" href="#" target="_blank" rel="noreferrer" data-i18n="send.tg">Открыть Telegram</a>
+    </div>
+
+    <div class="sendHint muted" data-i18n="send.hint">
+      На телефоне откроется приложение. На ПК — WhatsApp Web / Telegram Web или Desktop.
+    </div>
+  </div>
+</div>
+
+<script async src="https://www.instagram.com/embed.js"></script>
+<script src="app.js"></script>
+
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lightbox__bg" data-lb-close="1"></div>
+
+  <button class="lightbox__close" data-lb-close="1">✕</button>
+  <button class="lightbox__nav lightbox__nav--prev" id="lbPrev">‹</button>
+  <button class="lightbox__nav lightbox__nav--next" id="lbNext">›</button>
+
+  <img id="lbImg" alt="Фото авто">
+  <div class="lightbox__count" id="lbCount">1 / 1</div>
+</div>
+
+</body>
+</html>
