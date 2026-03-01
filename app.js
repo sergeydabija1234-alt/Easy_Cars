@@ -12,6 +12,103 @@ const TG_CHAT_ID = "-5113342887"; // твой chat_id
 const LS_CARS = "easycars_cars_v4";
 const LS_ADMIN_AUTH = "easycars_admin_auth_v1";
 
+// remote API base for cars
+const API_BASE = "https://69a439c0611ecf5bfc2474e3.mockapi.io/cars";
+// enable server‑side pagination / search etc
+const useServerPaging = true;
+
+// helpers for talking to the mockapi
+async function apiRequest(method, path = "", body = null) {
+  const url = API_BASE + path;
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`${method} ${url} failed (${res.status})`);
+  return await res.json();
+}
+
+async function fetchAllCars() { return await apiRequest("GET"); }
+async function fetchCarById(id) { return await apiRequest("GET", `/${id}`); }
+async function fetchCarsPage({page=1, limit=6, q="", tag="", sort=""} = {}) {
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("limit", limit);
+  if (q) params.append("search", q);
+  if (tag && tag !== "all") params.append("tag", tag);
+  if (sort) {
+    switch (sort) {
+      case "priceAsc": params.append("sortBy", "price"); params.append("order", "asc"); break;
+      case "priceDesc": params.append("sortBy", "price"); params.append("order", "desc"); break;
+      case "yearDesc": params.append("sortBy", "year"); params.append("order", "desc"); break;
+      default: // new -> sort by id desc
+        params.append("sortBy", "id"); params.append("order", "desc");
+    }
+  }
+  const url = "?" + params.toString();
+  try {
+    const data = await apiRequest("GET", url);
+    return data.map((c, i) => normalizeCar(c, i));
+  } catch (err) {
+    console.warn("fetchCarsPage failed, falling back to local", err);
+    // fallback to local storage if API unreachable
+    const all = await loadCars();
+    // apply filters/sort locally
+    let filtered = all.filter(matches);
+    filtered = sortCars(filtered);
+    const start = (page - 1) * limit;
+    return filtered.slice(start, start + limit);
+  }
+}
+async function fetchCarsCount({q="", tag=""} = {}) {
+  const params = new URLSearchParams();
+  if (q) params.append("search", q);
+  if (tag && tag !== "all") params.append("tag", tag);
+  const url = "?" + params.toString();
+  try {
+    const arr = await apiRequest("GET", url);
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch (err) {
+    console.warn("fetchCarsCount failed, falling back to local", err);
+    const all = await loadCars();
+    return all.filter(matches).length;
+  }
+}
+
+async function createCarRemote(car) { return await apiRequest("POST", "", car); }
+async function updateCarRemote(id, car) { return await apiRequest("PUT", `/${id}`, car); }
+async function deleteCarRemote(id) { return await apiRequest("DELETE", `/${id}`); }
+
+// normalize a raw object (from API or localStorage) into the internal shape
+function normalizeCar(raw, index) {
+  const specs = (raw && typeof raw.specs === "object" && raw.specs) ? raw.specs : {};
+  return {
+    id: Number(raw.id) || (index + 1),
+    tag: normalizeTag(raw.tag),
+    title: safeText(raw.title) || "Без названия",
+    year: Number(raw.year) || 2000,
+    price: Number(raw.price) || 0,
+    currency: safeText(raw.currency) || "€",
+    km: Number(raw.km) || 0,
+    meta: safeText(raw.meta),
+    text: safeText(raw.text),
+    coverUrl: normalizeCoverUrl(raw.coverUrl),
+    photos: Array.isArray(raw.photos)
+      ? raw.photos.map(normalizePhotoUrl).filter(Boolean).slice(0, 20)
+      : [],
+    igPosts: Array.isArray(raw.igPosts) ? raw.igPosts.map(normalizeIgUrl).filter(Boolean) : [],
+    specs: {
+      trans: cleanSpec(specs.trans),
+      fuel: cleanSpec(specs.fuel),
+      drive: cleanSpec(specs.drive),
+      body: cleanSpec(specs.body),
+      engine: normalizeEngine(specs.engine),
+      power: safeText(specs.power).replace(/[^0-9]/g, ""),
+      color: cleanSpec(specs.color),
+      vin: cleanSpec(specs.vin)
+    }
+  };
+}
+
 const $ = (id) => document.getElementById(id);
 function escapeHtml(s) {
   return String(s ?? "")
@@ -324,9 +421,34 @@ const seedCars = [
   }
 ];
 
-const state = { q: "", tag: "all", sort: "new", page: 1 };
+const state = { q: "", tag: "all", sort: "new", page: 1, totalItems: 0 };
 
-let cars = loadCars();
+let cars = []; // current page contents (or full list when not using server paging)
+let allCars = null; // cache of full dataset for admin
+
+async function ensureAllCars() {
+  if (allCars === null) {
+    try {
+      const arr = await fetchAllCars();
+      allCars = arr.map((c,i) => normalizeCar(c,i));
+    } catch (err) {
+      console.warn("failed to load all cars for admin", err);
+      allCars = [];
+    }
+  }
+  return allCars;
+}
+
+async function initData() {
+  if (useServerPaging) {
+    // pre‑fetch total count so pager shows something quickly
+    try { state.totalItems = await fetchCarsCount({}); } catch(e){ state.totalItems = 0; }
+  } else {
+    cars = await loadCars();
+  }
+  await render();
+}
+
 
 /* =========================
    UTILS
@@ -479,7 +601,20 @@ function carMetaAutoOrOld(car) {
 /* =========================
    STORAGE
 ========================= */
-function loadCars() {
+async function loadCars() {
+  // try to fetch from remote API first
+  try {
+    const apiData = await fetchAllCars();
+    if (Array.isArray(apiData) && apiData.length) {
+      // cache remote data locally for offline
+      try { localStorage.setItem(LS_CARS, JSON.stringify(apiData)); } catch {}
+      return apiData.map((c, i) => normalizeCar(c, i));
+    }
+  } catch (err) {
+    console.warn("API request failed, falling back to localStorage/seed", err);
+  }
+
+  // fallback to existing localStorage logic if API not available or returned empty
   try {
     const raw = localStorage.getItem(LS_CARS);
 
@@ -499,35 +634,7 @@ function loadCars() {
       return [...seedCars];
     }
 
-    return parsed.map((c, i) => {
-      const specs = (c && typeof c.specs === "object" && c.specs) ? c.specs : {};
-      return {
-        id: Number(c.id) || (i + 1),
-        tag: normalizeTag(c.tag),
-        title: safeText(c.title) || "Без названия",
-        year: Number(c.year) || 2000,
-        price: Number(c.price) || 0,
-        currency: safeText(c.currency) || "€",
-        km: Number(c.km) || 0,
-        meta: safeText(c.meta),
-        text: safeText(c.text),
-        coverUrl: normalizeCoverUrl(c.coverUrl),
-        photos: Array.isArray(c.photos)
-          ? c.photos.map(normalizePhotoUrl).filter(Boolean).slice(0, 20)
-          : [],
-        igPosts: Array.isArray(c.igPosts) ? c.igPosts.map(normalizeIgUrl).filter(Boolean) : [],
-        specs: {
-          trans: cleanSpec(specs.trans),
-          fuel: cleanSpec(specs.fuel),
-          drive: cleanSpec(specs.drive),
-          body: cleanSpec(specs.body),
-          engine: normalizeEngine(specs.engine),
-          power: safeText(specs.power).replace(/[^0-9]/g, ""),
-          color: cleanSpec(specs.color),
-          vin: cleanSpec(specs.vin)
-        }
-      };
-    });
+    return parsed.map((c, i) => normalizeCar(c, i));
   } catch (e) {
     localStorage.setItem(LS_CARS, JSON.stringify(seedCars));
     return [...seedCars];
@@ -569,6 +676,33 @@ function perPage() {
 }
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
+// Ensure grid keeps equal height regardless of items count
+function updateGridMinHeight() {
+  const grid = $("grid");
+  if (!grid) return;
+
+  const cs = getComputedStyle(grid);
+  const gap = parseFloat(cs.gap) || parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--grid-gap')) || 12;
+  // try to get item height from CSS var, fallback to first .item
+  const root = getComputedStyle(document.documentElement);
+  let itemH = parseFloat(root.getPropertyValue('--item-height')) || 0;
+  if (!itemH) {
+    const sample = grid.querySelector('.item');
+    if (sample) itemH = sample.getBoundingClientRect().height;
+  }
+  if (!itemH) itemH = 360;
+
+  // compute number of columns from computed grid template
+  let cols = 1;
+  try {
+    cols = (cs.gridTemplateColumns || '').split(' ').filter(Boolean).length || cols;
+  } catch (e) { cols = 1; }
+
+  const rows = Math.max(1, Math.ceil(perPage() / cols));
+  
+  
+}
+
 function ensurePager() {
   const pager = $("pager");
   if (!pager) return;
@@ -602,14 +736,16 @@ function slicePage(list) {
   const start = (state.page - 1) * pp;
   return list.slice(start, start + pp);
 }
-function keepScrollAndRender(nextPage) {
-  const y = window.scrollY || 0;
-
+async function keepScrollAndRender(nextPage) {
   state.page = nextPage;
-  render();
+  await render();
 
-  // вернуть позицию после перестройки DOM
-  requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "auto" }));
+  // после переключения страницы прокрутить к фильтрам
+  const filters = document.querySelector('.filters');
+  if (filters) {
+    // instant jump to filters, not smooth
+    filters.scrollIntoView({ behavior: 'auto' });
+  }
 }
 /* =========================
    INSTAGRAM EMBEDS
@@ -729,13 +865,107 @@ function startCardSlides() {
 /* =========================
    RENDER CATALOG
 ========================= */
-function render() {
-  const fullFiltered = sortCars(cars.filter(matches));
-  const pageList = slicePage(fullFiltered);
-
+async function render() {
   const grid = $("grid");
   const empty = $("empty");
   grid.innerHTML = "";
+
+  if (useServerPaging) {
+    const pp = perPage();
+    // fetch page with current filters/sort
+    let pageCars = [];
+    try {
+      pageCars = await fetchCarsPage({
+        page: state.page,
+        limit: pp,
+        q: state.q,
+        tag: state.tag,
+        sort: state.sort
+      });
+    } catch (err) {
+      console.warn("page fetch failed", err);
+      pageCars = [];
+    }
+
+    // ensure we know total count for pager
+    try {
+      state.totalItems = await fetchCarsCount({ q: state.q, tag: state.tag });
+    } catch (err) {
+      console.warn("count fetch failed", err);
+      state.totalItems = pageCars.length;
+    }
+
+    updatePager(state.totalItems || pageCars.length);
+
+    if (!pageCars.length) {
+      empty.hidden = false;
+      renderAdminList();
+      stopCardSlides();
+      return;
+    }
+    empty.hidden = true;
+
+    cars = pageCars; // keep current page for other logic
+
+    pageCars.forEach(c => {
+      const list = uniqKeepOrder([c.coverUrl, ...(c.photos || [])])
+        .map(normalizePhotoUrl)
+        .filter(Boolean);
+
+      const mainPhoto = list[0] || "";
+      const hasCover = !!mainPhoto;
+
+      const metaLine = carMetaAutoOrOld(c);
+
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const media = document.createElement("div");
+      media.className = "item__media";
+      media.setAttribute("data-open", String(c.id));
+      media.style.cursor = "pointer";
+
+      if (list.length >= 2) {
+        media.setAttribute("data-slide", "1");
+        media.setAttribute("data-carid", String(c.id));
+        media.setAttribute("data-ph", list.join("|"));
+      }
+
+      media.innerHTML = `
+        <div class="badgeStatus ${tagClass(c.tag)}">
+          ${tagLabel(c.tag)}
+        </div>
+        ${hasCover ? `<img src="${mainPhoto}" alt="Фото авто"> <div class="media__shade"></div>` : ""}
+        <div class="media__label">${hasCover ? "" : t("car.addPhoto")}</div>
+      `;
+
+      const body = document.createElement("div");
+      body.className = "item__body";
+      body.innerHTML = `
+        <div class="item__title">${titleLine(c)}</div>
+        <div class="item__price">${priceLine(c)}</div>
+        <div class="item__meta">${safeText(metaLine)}</div>
+        <div class="item__meta">${tagLabel(c.tag)}${c.km ? " • " + formatMoney(c.km) + " " + t("car.km") : ""}</div>
+        <div class="item__row">
+          <button class="btn btn--ghost" data-open="${c.id}">${t("car.details")}</button>
+          <a class="btn" href="${IG_LINK}" target="_blank" rel="noreferrer">${t("car.write")}</a>
+        </div>
+      `;
+
+      el.appendChild(media);
+      el.appendChild(body);
+      grid.appendChild(el);
+    });
+
+    renderAdminList();
+    startCardSlides();
+    updateGridMinHeight();
+    return;
+  }
+
+  // fallback to local rendering
+  const fullFiltered = sortCars(cars.filter(matches));
+  const pageList = slicePage(fullFiltered);
 
   updatePager(fullFiltered.length);
 
@@ -799,6 +1029,7 @@ function render() {
 
   renderAdminList();
   startCardSlides();
+  updateGridMinHeight();
 }
 
 /* =========================
@@ -1093,7 +1324,7 @@ function updateMetaPreviewFromForm() {
   if (box) box.textContent = `Meta: ${meta || "—"}`;
 }
 
-function upsertCarFromForm() {
+async function upsertCarFromForm() {
   const idRaw = $("aId").value.trim();
   const isEdit = !!idRaw;
 
@@ -1123,45 +1354,47 @@ function upsertCarFromForm() {
 
   const metaAuto = buildMetaFromSpecs({ specs }) || "";
 
-  if (isEdit) {
-    const id = Number(idRaw);
-    const idx = cars.findIndex(c => Number(c.id) === id);
-    if (idx === -1) { alert("Авто не найдено"); return; }
-
-    cars[idx] = {
-      ...cars[idx],
-      title, year, price, currency, km, tag,
-      coverUrl, photos,
-      meta: metaAuto ? "" : safeText(cars[idx].meta),
-      text, igPosts,
-      specs
-    };
-
-    saveCars();
-    render();
-    fillAdminForm(cars[idx]);
-
-    $("saveBtn").textContent = "✅ Обновлено";
-    setTimeout(() => { $("saveBtn").textContent = "Обновить"; }, 700);
-    return;
-  }
-
-  cars.unshift({
-    id: nextId(),
+  // prepare payload that mirrors internal structure; note: API may ignore extra fields
+  const payload = {
     title, year, price, currency, km, tag,
-    coverUrl, photos,
-    meta: "",
-    text, igPosts,
-    specs
-  });
+    coverUrl, photos, meta: metaAuto ? "" : safeText($("aMeta").value),
+    text, igPosts, specs
+  };
 
-  saveCars();
-  clearAdminForm();
-  state.page = 1;
-  render();
+  try {
+    if (isEdit) {
+      const id = Number(idRaw);
+      const idx = cars.findIndex(c => Number(c.id) === id);
+      if (idx === -1) { alert("Авто не найдено"); return; }
 
-  $("saveBtn").textContent = "✅ Сохранено";
-  setTimeout(() => { $("saveBtn").textContent = "Сохранить"; }, 700);
+      const updated = await updateCarRemote(id, payload);
+      cars[idx] = normalizeCar(updated, idx);
+
+      allCars = null;
+      saveCars();
+      await render();
+      fillAdminForm(cars[idx]);
+
+      $("saveBtn").textContent = "✅ Обновлено";
+      setTimeout(() => { $("saveBtn").textContent = "Обновить"; }, 700);
+      return;
+    }
+
+    const created = await createCarRemote(payload);
+    cars.unshift(normalizeCar(created, 0));
+
+    allCars = null;
+    saveCars();
+    clearAdminForm();
+    state.page = 1;
+    await render();
+
+    $("saveBtn").textContent = "✅ Сохранено";
+    setTimeout(() => { $("saveBtn").textContent = "Сохранить"; }, 700);
+  } catch (err) {
+    console.error(err);
+    alert("Ошибка при сохранении на сервере");
+  }
 }
 
 /* =========================
@@ -1184,12 +1417,17 @@ function toggleTextRu(tag) {
   return "Сделать: В наличии";
 }
 
-function renderAdminList() {
+async function renderAdminList() {
   const box = $("adminItems");
   if (!box) return;
 
   box.innerHTML = "";
-  const sorted = [...cars].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+  let list = cars;
+  if (useServerPaging) {
+    list = await ensureAllCars();
+  }
+
+  const sorted = [...list].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
 
   if (sorted.length === 0) {
     const div = document.createElement("div");
@@ -1226,6 +1464,53 @@ function renderAdminList() {
   });
 }
 
+// async helpers for operations that hit the API
+async function toggleCarTag(id) {
+  // update server first
+  try {
+    // fetch current state if we don't have it locally
+    let payload = {};
+    const existing = cars.find(x => Number(x.id) === Number(id));
+    if (existing) payload = { ...existing, tag: nextTagCycle(normalizeTag(existing.tag)) };
+    else if (useServerPaging) {
+      const raw = await fetchCarById(id);
+      const norm = normalizeCar(raw, 0);
+      payload = { ...norm, tag: nextTagCycle(normalizeTag(norm.tag)) };
+    }
+    const updated = await updateCarRemote(id, payload);
+    // refresh page and admin cache
+    allCars = null;
+    await render();
+  } catch (err) {
+    console.error(err);
+    alert("Не удалось обновить статус на сервере");
+  }
+}
+
+async function deleteCarById(id) {
+  let car = cars.find(x => Number(x.id) === Number(id));
+  if (!car && useServerPaging) {
+    try {
+      const raw = await fetchCarById(id);
+      car = normalizeCar(raw, 0);
+    } catch (e) {}
+  }
+  if (!car) return;
+  const ok = confirm(`Удалить "${car.title} • ${car.year}"?`);
+  if (!ok) return;
+  try {
+    await deleteCarRemote(id);
+  } catch (err) {
+    console.error(err);
+    alert("Ошибка удаления на сервере");
+  }
+  // refresh current page
+  state.page = 1;
+  allCars = null;
+  await render();
+  clearAdminForm();
+}
+
 /* =========================
    EXPORT / IMPORT
 ========================= */
@@ -1247,56 +1532,66 @@ function exportJson() {
 function importJsonFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const parsed = JSON.parse(String(reader.result || "[]"));
-      if (!Array.isArray(parsed)) throw new Error("not array");
+    (async () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || "[]"));
+        if (!Array.isArray(parsed)) throw new Error("not array");
 
-      const cleaned = parsed
-        .filter(x => x && typeof x === "object")
-        .map((x, i) => {
-          const specs = (x && typeof x.specs === "object" && x.specs) ? x.specs : {};
-          const car = {
-            id: Number(x.id) || (i + 1),
-            title: safeText(x.title) || "Без названия",
-            year: Number(x.year) || 2000,
-            price: Number(x.price) || 0,
-            currency: safeText(x.currency) || "€",
-            km: Number(x.km) || 0,
-            tag: normalizeTag(x.tag),
-            coverUrl: normalizeCoverUrl(x.coverUrl),
-            photos: Array.isArray(x.photos)
-              ? x.photos.map(normalizePhotoUrl).filter(Boolean).slice(0, 20)
-              : parsePhotoList(x.photos || ""),
-            meta: safeText(x.meta),
-            text: safeText(x.text),
-            igPosts: Array.isArray(x.igPosts) ? x.igPosts.map(normalizeIgUrl).filter(Boolean) : parseIgList(x.igPosts || ""),
-            specs: {
-              trans: cleanSpec(specs.trans),
-              fuel: cleanSpec(specs.fuel),
-              drive: cleanSpec(specs.drive),
-              body: cleanSpec(specs.body),
-              engine: normalizeEngine(specs.engine),
-              power: safeText(specs.power).replace(/[^0-9]/g, ""),
-              color: cleanSpec(specs.color),
-              vin: cleanSpec(specs.vin)
-            }
-          };
+        const cleaned = parsed
+          .filter(x => x && typeof x === "object")
+          .map((x, i) => {
+            const specs = (x && typeof x.specs === "object" && x.specs) ? x.specs : {};
+            const car = {
+              id: Number(x.id) || (i + 1),
+              title: safeText(x.title) || "Без названия",
+              year: Number(x.year) || 2000,
+              price: Number(x.price) || 0,
+              currency: safeText(x.currency) || "€",
+              km: Number(x.km) || 0,
+              tag: normalizeTag(x.tag),
+              coverUrl: normalizeCoverUrl(x.coverUrl),
+              photos: Array.isArray(x.photos)
+                ? x.photos.map(normalizePhotoUrl).filter(Boolean).slice(0, 20)
+                : parsePhotoList(x.photos || ""),
+              meta: safeText(x.meta),
+              text: safeText(x.text),
+              igPosts: Array.isArray(x.igPosts) ? x.igPosts.map(normalizeIgUrl).filter(Boolean) : parseIgList(x.igPosts || ""),
+              specs: {
+                trans: cleanSpec(specs.trans),
+                fuel: cleanSpec(specs.fuel),
+                drive: cleanSpec(specs.drive),
+                body: cleanSpec(specs.body),
+                engine: normalizeEngine(specs.engine),
+                power: safeText(specs.power).replace(/[^0-9]/g, ""),
+                color: cleanSpec(specs.color),
+                vin: cleanSpec(specs.vin)
+              }
+            };
 
-          car.photos = uniqKeepOrder(car.photos || []).slice(0, 20);
-          if (!car.coverUrl && car.photos.length) car.coverUrl = car.photos[0];
+            car.photos = uniqKeepOrder(car.photos || []).slice(0, 20);
+            if (!car.coverUrl && car.photos.length) car.coverUrl = car.photos[0];
 
-          return car;
-        });
+            return car;
+          });
 
-      cars = cleaned;
-      saveCars();
-      clearAdminForm();
-      state.page = 1;
-      render();
-      alert("Импорт успешно");
-    } catch (e) {
-      alert("Не получилось импортировать JSON");
-    }
+        cars = cleaned;
+
+        // push imported cars to remote API
+        try {
+          await Promise.all(cars.map(c => createCarRemote(c)));
+        } catch (err) {
+          console.error("Error uploading imported cars", err);
+        }
+
+        saveCars();
+        clearAdminForm();
+        state.page = 1;
+        render();
+        alert("Импорт успешно");
+      } catch (e) {
+        alert("Не получилось импортировать JSON");
+      }
+    })();
   };
   reader.readAsText(file);
 }
@@ -1365,21 +1660,26 @@ function initFloatingWhatsApp() {
 /* =========================
    BIND MAIN UI
 ========================= */
-$("q")?.addEventListener("input", (e) => { state.q = e.target.value; state.page = 1; render(); });
-$("tag")?.addEventListener("change", (e) => { state.tag = e.target.value; state.page = 1; render(); });
-$("sort")?.addEventListener("change", (e) => { state.sort = e.target.value; state.page = 1; render(); });
+$("q")?.addEventListener("input", async (e) => { state.q = e.target.value; state.page = 1; await render(); });
+$("tag")?.addEventListener("change", async (e) => { state.tag = e.target.value; state.page = 1; await render(); });
+$("sort")?.addEventListener("change", async (e) => { state.sort = e.target.value; state.page = 1; await render(); });
 
-$("pagePrev")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  const next = Math.max(1, (Number(state.page) || 1) - 1);
-  keepScrollAndRender(next);
-});
+function bindPager(btn, change) {
+  if (!btn) return;
+  const handler = async (e) => {
+    e.preventDefault();
+    // blur early to avoid mobile viewport jump
+    (e.target || e.currentTarget)?.blur();
+    const next = change(Number(state.page) || 1);
+    await keepScrollAndRender(next);
+  };
+  btn.addEventListener("click", handler);
+  // also handle touchend which sometimes triggers focus changes differently
+  btn.addEventListener("touchend", handler);
+}
 
-$("pageNext")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  const next = (Number(state.page) || 1) + 1;
-  keepScrollAndRender(next);
-});
+bindPager($("pagePrev"), (p) => Math.max(1, p - 1));
+bindPager($("pageNext"), (p) => p + 1);
 
 let lastPP = perPage();
 window.addEventListener("resize", () => {
@@ -1387,10 +1687,14 @@ window.addEventListener("resize", () => {
   if (pp !== lastPP) {
     lastPP = pp;
     render();
+    // ensure grid height recalculated after render
+    setTimeout(updateGridMinHeight, 80);
   }
+  // always adjust grid min height for small resizes
+  updateGridMinHeight();
 }, { passive: true });
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const tEl = e.target;
 
   const openId =
@@ -1398,7 +1702,15 @@ document.addEventListener("click", (e) => {
     tEl?.closest?.("[data-open]")?.getAttribute?.("data-open");
 
   if (openId) {
-    const car = cars.find(x => Number(x.id) === Number(openId));
+    let car = cars.find(x => Number(x.id) === Number(openId));
+    if (!car && useServerPaging) {
+      try {
+        const raw = await fetchCarById(openId);
+        car = normalizeCar(raw, 0);
+      } catch (err) {
+        console.warn("failed to load car by id", err);
+      }
+    }
     if (car) openCarModal(car);
     return;
   }
@@ -1416,17 +1728,21 @@ document.addEventListener("click", (e) => {
 
   const toggleId = tEl?.getAttribute?.("data-toggle");
   if (toggleId) {
-    const car = cars.find(x => Number(x.id) === Number(toggleId));
-    if (!car) return;
-    car.tag = nextTagCycle(normalizeTag(car.tag));
-    saveCars();
-    render();
+    await toggleCarTag(toggleId);
     return;
   }
 
   const editId = tEl?.getAttribute?.("data-edit");
   if (editId) {
-    const car = cars.find(x => Number(x.id) === Number(editId));
+    let car = cars.find(x => Number(x.id) === Number(editId));
+    if (!car && useServerPaging) {
+      try {
+        const raw = await fetchCarById(editId);
+        car = normalizeCar(raw, 0);
+      } catch (err) {
+        console.warn("failed to fetch car for edit", err);
+      }
+    }
     if (car) {
       fillAdminForm(car);
       updateMetaPreviewFromForm();
@@ -1436,15 +1752,7 @@ document.addEventListener("click", (e) => {
 
   const delId = tEl?.getAttribute?.("data-del");
   if (delId) {
-    const car = cars.find(x => Number(x.id) === Number(delId));
-    if (!car) return;
-    const ok = confirm(`Удалить "${car.title} • ${car.year}"?`);
-    if (!ok) return;
-    cars = cars.filter(x => Number(x.id) !== Number(delId));
-    saveCars();
-    clearAdminForm();
-    state.page = 1;
-    render();
+    await deleteCarById(delId);
     return;
   }
 });
@@ -1488,7 +1796,7 @@ document.addEventListener("keydown", (e) => {
 })();
 
 /* admin actions */
-$("adminForm")?.addEventListener("submit", (e) => { e.preventDefault(); upsertCarFromForm(); });
+$("adminForm")?.addEventListener("submit", async (e) => { e.preventDefault(); await upsertCarFromForm(); });
 $("resetAdminBtn")?.addEventListener("click", clearAdminForm);
 
 $("exportBtn")?.addEventListener("click", exportJson);
@@ -1498,9 +1806,15 @@ $("importFile")?.addEventListener("change", (e) => {
   if (file) importJsonFile(file);
   e.target.value = "";
 });
-$("clearAllBtn")?.addEventListener("click", () => {
-  const ok = confirm("Точно очистить ВСЕ авто? Это удалит их из localStorage.");
+$("clearAllBtn")?.addEventListener("click", async () => {
+  const ok = confirm("Точно очистить ВСЕ авто? Это удалит их из localStorage и на сервере.");
   if (!ok) return;
+  try {
+    await Promise.all(cars.map(c => deleteCarRemote(c.id)));
+  } catch (err) {
+    console.error(err);
+    alert("Ошибка при очистке на сервере");
+  }
   cars = [];
   saveCars();
   clearAdminForm();
@@ -1640,8 +1954,12 @@ function syncToTopWithFab() {
 ensureLightbox();
 ensurePager();
 initLangSwitch();
-render();
-setTimeout(initReveal, 50);
+
+// load data from API/localStorage and then render
+initData().then(() => {
+  setTimeout(initReveal, 50);
+});
+
 initFloatingWhatsApp();
 updateMetaPreviewFromForm();
 initBackToTop();

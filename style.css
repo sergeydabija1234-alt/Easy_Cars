@@ -28,6 +28,9 @@
 
   --accent:#4F8BFF;
   --accent2:#22C55E;
+  /* fixed card height used by grid math; override in JS for exact values */
+  --item-height: 360px;
+  --grid-gap: 12px;
 }
 
 *{ box-sizing:border-box; }
@@ -44,7 +47,7 @@ body{
     linear-gradient(180deg, var(--bg0), var(--bg1));
 }
 
-.wrap{ max-width:1120px; margin:0 auto; padding:0 16px; }
+.wrap{ max-width:1120px; margin:0 auto; padding:0 16px;  }
 .muted{ opacity:.76; }
 .h2{ margin:0 0 12px; font-size: 28px; letter-spacing:-.3px; }
 
@@ -353,6 +356,8 @@ select.input:focus{
   overflow:hidden;
   box-shadow: 0 18px 44px rgba(0,0,0,.28);
   display:flex; flex-direction:column;
+  height: var(--item-height);
+  min-height: var(--item-height);
 
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   will-change: transform;
@@ -420,6 +425,7 @@ select.input:focus{
 .item__body{
   padding: 16px 16px 18px;
   display:flex; flex-direction:column; gap:10px;
+  overflow: hidden;
 }
 .item__title{ font-weight:900; font-size: 18px; letter-spacing:-.2px; }
 .item__price{ font-weight:900; font-size: 20px; }
