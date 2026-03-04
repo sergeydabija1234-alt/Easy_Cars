@@ -17,6 +17,25 @@ const API_BASE = "https://69a439c0611ecf5bfc2474e3.mockapi.io/cars";
 // enable server‑side pagination / search etc
 const useServerPaging = true;
 
+// helper to debounce async functions and prevent race conditions
+function debounce(func, delay) {
+  let timeoutId = null;
+  let isRunning = false;
+  return async function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(async () => {
+      if (!isRunning) {
+        isRunning = true;
+        try {
+          await func.apply(this, args);
+        } finally {
+          isRunning = false;
+        }
+      }
+    }, delay);
+  };
+}
+
 // helpers for talking to the mockapi
 async function apiRequest(method, path = "", body = null) {
   const url = API_BASE + path;
@@ -1660,7 +1679,8 @@ function initFloatingWhatsApp() {
 /* =========================
    BIND MAIN UI
 ========================= */
-$("q")?.addEventListener("input", async (e) => { state.q = e.target.value; state.page = 1; await render(); });
+const debouncedRender = debounce(render, 300);
+$("q")?.addEventListener("input", async (e) => { state.q = e.target.value; state.page = 1; await debouncedRender(); });
 $("tag")?.addEventListener("change", async (e) => { state.tag = e.target.value; state.page = 1; await render(); });
 $("sort")?.addEventListener("change", async (e) => { state.sort = e.target.value; state.page = 1; await render(); });
 
