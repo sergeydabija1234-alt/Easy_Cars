@@ -2082,5 +2082,221 @@ select.input option{
   opacity: 1;
   transform: translateY(0);
 }
+.lightbox__close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:48px;
+  height:48px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;
+  background: rgba(255,255,255,.15);
+  color:#fff;
+  font-size:22px;
+  cursor:pointer;
+  z-index:3;
+  display:grid;
+  place-items:center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+.lightbox__close:hover{
+  transform: scale(1.04);
+  background: rgba(255,255,255,.20);
+  border-color: rgba(255,255,255,.24);
+}
+.lightbox__nav{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  width:58px;
+  height:58px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:16px;
+  background: rgba(255,255,255,.15);
+  color:#fff;
+  font-size:34px;
+  cursor:pointer;
+  z-index:3;
+  display:grid;
+  place-items:center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+.lightbox__nav:hover{
+  transform: translateY(-50%) scale(1.04);
+  background: rgba(255,255,255,.20);
+  border-color: rgba(255,255,255,.24);
+}
+.lightbox__nav--prev{ left:16px; }
+.lightbox__nav--next{ right:16px; }
+
+@media (max-width: 560px){
+  .grid{ grid-template-columns: 1fr; }
+  .preorderGrid{ grid-template-columns: 1fr; }
+
+  .item{
+    min-height: 0;
+    height: auto;
+  }
+
+  .item__media{
+    height: 170px;
+    min-height: 170px;
+  }
+
+  .item__body{
+    padding: 14px;
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .item__title{
+    font-size: 17px;
+  }
+
+  .item__price{
+    font-size: 18px;
+  }
+
+  .item__meta{
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  .item__row{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    opacity:1;
+    transform:none;
+    margin-top:12px;
+  }
+
+  .item__row .btn{
+    width:100%;
+    min-height:44px;
+    padding:10px 10px;
+    font-size:14px;
+  }
+
+  .floatFab{
+    right:12px;
+    bottom:12px;
+  }
+
+  .floatFab__btn{
+    width:52px;
+    height:52px;
+  }
+
+  .floatFab__btn svg{
+    width:26px;
+    height:26px;
+  }
+
+  .floatFab.open .floatFab__btn--ig{ transform: translate(-60px,-18px) scale(1); }
+  .floatFab.open .floatFab__btn--tg{ transform: translate(-42px,-68px) scale(1); }
+  .floatFab.open .floatFab__btn--tel{ transform: translate(0,-80px) scale(1); }
+
+  .photoStrip__thumbs img{
+    width:84px;
+    height:58px;
+  }
+
+  .mapFrame{ height:220px; }
+
+  .brandPill{
+    height: 44px;
+    padding: 0 14px;
+  }
+
+  .brandPill__text{ font-size: 14px; }
+
+  .langSwitch__btn{ width: 44px; }
+
+  .pager{
+    gap:10px;
+    padding: 9px 12px;
+  }
+
+  .pager__btn{
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .pager__info{
+    min-width: 64px;
+  }
+
+  .sendActions{
+    grid-template-columns: 1fr;
+  }
+
+  .requestTabs{
+    width:100%;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 18px;
+    padding:6px;
+  }
+
+  .requestTabs__btn{
+    min-width: auto;
+    border-radius: 14px;
+  }
+
+  .lightbox__close{
+    top:12px;
+    right:12px;
+    width:46px;
+    height:46px;
+    border-radius:14px;
+    font-size:22px;
+  }
+
+  .lightbox__nav{
+    width:56px;
+    height:56px;
+    border-radius:16px;
+    font-size:34px;
+  }
+
+  .lightbox__nav--prev{ left:12px; }
+  .lightbox__nav--next{ right:12px; }
+
+  #lbImg{
+    max-width: calc(100vw - 28px);
+    max-height: calc(100vh - 120px);
+    border-radius: 16px;
+  }
+
+  .lightbox__count{
+    bottom:14px;
+    padding:7px 13px;
+  }
+}
+
+.reveal{
+  opacity: 0;
+  transform: translateY(34px);
+  transition: opacity .62s ease, transform .62s ease;
+  will-change: opacity, transform;
+}
+
+.reveal.active{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 980px){
+  .reveal{
+    transform: translateY(22px);
+    transition: opacity .42s ease, transform .42s ease;
+  }
+}
 
 }

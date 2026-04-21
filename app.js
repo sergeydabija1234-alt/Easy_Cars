@@ -16,8 +16,6 @@ const PREORDER_API_BASE = "https://69a439c0611ecf5bfc2474e3.mockapi.io/preorders
 
 const useServerPaging = true;
 
-
-
 const $ = (id) => document.getElementById(id);
 
 function debounce(func, delay) {
@@ -36,6 +34,34 @@ function debounce(func, delay) {
       }
     }, delay);
   };
+}
+
+function bindTap(el, handler, opts = {}) {
+  if (!el || typeof handler !== "function") return;
+
+  const stop = opts.stop !== false;
+  let touchHandled = false;
+
+  el.addEventListener("click", (e) => {
+    if (touchHandled) {
+      touchHandled = false;
+      return;
+    }
+    if (stop) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    handler(e);
+  });
+
+  el.addEventListener("touchend", (e) => {
+    touchHandled = true;
+    if (stop) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    handler(e);
+  }, { passive: false });
 }
 
 /* =========================
@@ -764,6 +790,8 @@ function openLightbox(list, index = 0) {
 
   lbIndex = Math.max(0, Math.min(index, lbPhotos.length - 1));
   const lb = $("lightbox");
+  if (!lb) return;
+
   lb.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
   updateLightbox();
@@ -780,8 +808,10 @@ function closeLightbox() {
 function updateLightbox() {
   if (!lbPhotos.length) return;
   const src = lbPhotos[lbIndex];
-  $("lbImg").src = src;
-  $("lbCount").textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
+  const img = $("lbImg");
+  const count = $("lbCount");
+  if (img) img.src = src;
+  if (count) count.textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
   $("lightbox")?.style?.setProperty("--lb-bg", `url("${src}")`);
 }
 
@@ -801,6 +831,68 @@ function lbPrev() {
   if (!lbPhotos.length) return;
   lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
   updateLightbox();
+}
+
+function initLightboxControls() {
+  const prevBtn = $("lbPrev");
+  const nextBtn = $("lbNext");
+  const closeBtn = $("lbClose");
+  const box = $("lightbox");
+  const img = $("lbImg");
+
+  bindTap(prevBtn, () => lbPrev());
+  bindTap(nextBtn, () => lbNext());
+  bindTap(closeBtn, () => closeLightbox());
+
+  if (!box) return;
+
+  [prevBtn, nextBtn, closeBtn, img].forEach((el) => {
+    el?.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+    el?.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
+    el?.addEventListener("touchend", (e) => e.stopPropagation(), { passive: true });
+  });
+
+  let startX = 0;
+  let startY = 0;
+  let moved = false;
+
+  box.addEventListener("touchstart", (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    startX = t.clientX;
+    startY = t.clientY;
+    moved = false;
+  }, { passive: true });
+
+  box.addEventListener("touchmove", (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) moved = true;
+  }, { passive: true });
+
+  box.addEventListener("touchend", (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+
+    const moveX = t.clientX - startX;
+    const moveY = t.clientY - startY;
+
+    if (Math.abs(moveX) > 50 && Math.abs(moveY) < 80) {
+      if (moveX < 0) lbNext();
+      else lbPrev();
+      return;
+    }
+
+    if (!moved && e.target === box) {
+      closeLightbox();
+    }
+  }, { passive: true });
+
+  box.addEventListener("click", (e) => {
+    if (e.target === box) closeLightbox();
+  });
 }
 
 /* =========================
@@ -828,7 +920,7 @@ function startCardSlides() {
     const timer = setInterval(() => {
       idx = (idx + 1) % list.length;
       img.src = list[idx];
-    }, 2600);
+    }, 2400);
 
     cardSlideTimers.set(id, timer);
   });
@@ -1675,6 +1767,7 @@ async function render() {
   renderAdminList();
   initScrollAnimations();
 }
+
 /* =========================
    PREORDER RENDER
 ========================= */
@@ -1702,14 +1795,14 @@ function ensurePreorderPager() {
 
   grid.insertAdjacentElement("afterend", pager);
 
-  $("preorderPagePrev")?.addEventListener("click", () => {
+  bindTap($("preorderPagePrev"), () => {
     appState.preorderPage = Math.max(1, (appState.preorderPage || 1) - 1);
     renderPreorders();
     const section = $("request");
     if (section) section.scrollIntoView({ behavior: "auto", block: "start" });
   });
 
-  $("preorderPageNext")?.addEventListener("click", () => {
+  bindTap($("preorderPageNext"), () => {
     const totalPages = Math.max(
       1,
       Math.ceil(dedupeCars(preorders || []).length / preorderPerPage())
@@ -2018,14 +2111,11 @@ $("sort")?.addEventListener("change", async (e) => {
 
 function bindPager(btn, change) {
   if (!btn) return;
-  const handler = async (e) => {
-    e.preventDefault();
-    (e.target || e.currentTarget)?.blur();
+  bindTap(btn, async () => {
+    btn.blur();
     const next = change(Number(state.page) || 1);
     await keepScrollAndRender(next);
-  };
-  btn.addEventListener("click", handler);
-  btn.addEventListener("touchend", handler);
+  });
 }
 
 bindPager($("pagePrev"), (p) => Math.max(1, p - 1));
@@ -2292,10 +2382,13 @@ $("clearAllBtn")?.addEventListener("click", async () => {
   if (y) y.textContent = String(new Date().getFullYear());
 })();
 
+(function initLightboxBoot() {
+  initLightboxControls();
+})();
+
 initLangSwitch();
 initFloatingWhatsApp();
 initData();
-
 
 /* =========================
    SCROLL ANIMATIONS
@@ -2324,6 +2417,12 @@ function initScrollAnimations() {
 
   if (!elements.length) return;
 
+  const isMobile = window.innerWidth <= 980;
+  const delayStep = isMobile ? 45 : 70;
+  const maxDelay = isMobile ? 220 : 420;
+  const threshold = isMobile ? 0.08 : 0.16;
+  const rootMargin = isMobile ? "0px 0px -40px 0px" : "0px 0px -80px 0px";
+
   if (scrollAnimObserver) {
     scrollAnimObserver.disconnect();
   }
@@ -2331,7 +2430,7 @@ function initScrollAnimations() {
   elements.forEach((el, index) => {
     el.classList.add("reveal");
     el.classList.remove("active");
-    el.style.transitionDelay = `${Math.min(index * 70, 420)}ms`;
+    el.style.transitionDelay = `${Math.min(index * delayStep, maxDelay)}ms`;
   });
 
   scrollAnimObserver = new IntersectionObserver((entries, obs) => {
@@ -2341,8 +2440,8 @@ function initScrollAnimations() {
       obs.unobserve(entry.target);
     });
   }, {
-    threshold: 0.16,
-    rootMargin: "0px 0px -80px 0px"
+    threshold,
+    rootMargin
   });
 
   elements.forEach((el) => scrollAnimObserver.observe(el));
