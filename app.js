@@ -730,14 +730,15 @@ function updateGridMinHeight() {
   const grid = $("grid");
   if (!grid) return;
 
-  if (!grid.children.length) {
+  const itemCount = grid.children.length;
+  if (!itemCount) {
     grid.style.minHeight = "0px";
     return;
   }
 
   const cs = getComputedStyle(grid);
   const cols = (cs.gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
-  const rows = Math.max(1, Math.ceil(perPage() / cols));
+  const rows = Math.max(1, Math.ceil(itemCount / cols));
   const itemH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--item-height")) || 360;
   const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--grid-gap")) || 12;
 
@@ -1901,6 +1902,8 @@ function renderPreorders() {
 
     grid.appendChild(el);
   });
+
+  initScrollAnimations();
 }
 
 /* =========================

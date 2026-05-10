@@ -834,7 +834,8 @@ select.input option{
 .grid{
   margin-top: 16px;
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(320px, 360px));
+  justify-content: start;
   gap: 12px;
 }
 
@@ -854,6 +855,9 @@ select.input option{
   will-change: transform;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  width: 100%;
+  max-width: 360px;
+  justify-self: start;
 }
 
 .item:hover{
@@ -1161,6 +1165,7 @@ select.input option{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:12px;
+  justify-items: center;
 }
 .preorderCard{
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
@@ -1175,6 +1180,9 @@ select.input option{
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  width: 100%;
+  max-width: 360px;
+  justify-self: center;
 }
 .preorderCard:hover{
   transform: translateY(-4px);
